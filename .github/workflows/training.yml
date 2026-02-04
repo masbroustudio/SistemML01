@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'Workflow-CI/**'
+      - '.github/workflows/training.yml'
   workflow_dispatch:
 
 jobs:
