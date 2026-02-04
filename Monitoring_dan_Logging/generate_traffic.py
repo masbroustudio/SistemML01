@@ -9,7 +9,7 @@ print("Press Ctrl+C to stop.")
 
 try:
     while True:
-        # Dummy features sesuai 7.inference.py (5 fitur)
+        # Fitur dummy sesuai 7.inference.py (5 fitur)
         features = [random.random() for _ in range(5)]
         payload = {"features": features}
         

@@ -45,3 +45,6 @@ venv.bak/
 
 # Jupyter Notebook
 .ipynb_checkpoints
+
+# Documentation
+docs/

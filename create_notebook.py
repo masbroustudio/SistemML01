@@ -3,7 +3,7 @@ import os
 
 nb = nbf.v4.new_notebook()
 
-# Cell 1: Import Libraries
+# Cell 1: Impor Pustaka
 text_1 = """\
 # Eksperimen Preprocessing Data Titanic
 Notebook ini berisi tahapan eksperimen mulai dari loading data, EDA, hingga preprocessing untuk menyiapkan data bagi model Machine Learning.
@@ -17,14 +17,14 @@ import matplotlib.pyplot as plt
 %matplotlib inline
 """
 
-# Cell 2: Load Data
+# Cell 2: Muat Data
 text_2 = "## 1. Load Data"
 code_2 = """\
 df = pd.read_csv('../titanic_raw/train.csv')
 df.head()
 """
 
-# Cell 3: EDA
+# Cell 3: Analisis Data Eksploratif
 text_3 = "## 2. Exploratory Data Analysis (EDA)"
 code_3 = """\
 df.info()
@@ -37,7 +37,7 @@ code_5 = """\
 df.isnull().sum()
 """
 
-# Cell 4: Preprocessing
+# Cell 4: Pra-pemrosesan Data
 text_4 = "## 3. Data Preprocessing"
 code_6 = """\
 # Drop kolom yang tidak diperlukan
@@ -46,7 +46,7 @@ df_clean.head()
 """
 
 code_7 = """\
-# Fill missing values
+# Isi nilai yang hilang
 # Age: isi dengan median
 df_clean['Age'] = df_clean['Age'].fillna(df_clean['Age'].median())
 
@@ -58,7 +58,7 @@ df_clean.isnull().sum()
 """
 
 code_8 = """\
-# Encoding Categorical Variables
+# Encoding Variabel Kategorikal
 # Sex: Label Encoding
 df_clean['Sex'] = df_clean['Sex'].map({'male': 0, 'female': 1})
 
@@ -90,8 +90,8 @@ nb['cells'] = [
     nbf.v4.new_code_cell(code_9)
 ]
 
-os.makedirs('Eksperimen_SML_Trae/preprocessing', exist_ok=True)
-with open('Eksperimen_SML_Trae/preprocessing/Eksperimen_Trae.ipynb', 'w') as f:
+os.makedirs('Eksperimen_SML_YudhaElfransyah/preprocessing', exist_ok=True)
+with open('Eksperimen_SML_YudhaElfransyah/preprocessing/Eksperimen_Yudha_Elfransyah.ipynb', 'w') as f:
     nbf.write(nb, f)
 
 print("Notebook created successfully.")

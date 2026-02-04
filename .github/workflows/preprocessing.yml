@@ -3,8 +3,8 @@ name: Preprocessing Pipeline
 on:
   push:
     paths:
-      - 'Eksperimen_SML_Trae/titanic_raw/**'
-      - 'Eksperimen_SML_Trae/preprocessing/automate_Trae.py'
+      - 'Eksperimen_SML_YudhaElfransyah/titanic_raw/**'
+      - 'Eksperimen_SML_YudhaElfransyah/preprocessing/automate_Yudha_Elfransyah.py'
   workflow_dispatch:
 
 jobs:
@@ -27,7 +27,7 @@ jobs:
 
     - name: Run Preprocessing Script
       run: |
-        python Eksperimen_SML_Trae/preprocessing/automate_Trae.py
+        python Eksperimen_SML_YudhaElfransyah/preprocessing/automate_Yudha_Elfransyah.py
 
     - name: Commit and Push Processed Data
       env:
@@ -35,5 +35,5 @@ jobs:
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git add Eksperimen_SML_Trae/preprocessing/train_processed.csv
+        git add Eksperimen_SML_YudhaElfransyah/preprocessing/train_processed.csv
         git diff --quiet && git diff --staged --quiet || (git commit -m "Update processed data" && git push)

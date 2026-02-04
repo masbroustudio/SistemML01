@@ -40,27 +40,29 @@ jobs:
       run: |
         cd Workflow-CI/MLProject
         
-        # Set Tracking URI to local mlruns
         export MLFLOW_TRACKING_URI=file://$(pwd)/mlruns
         
-        # Get latest Run ID using Python
         RUN_ID=$(python -c "import mlflow; runs = mlflow.search_runs(experiment_ids=['0']); print(runs.iloc[0].run_id if not runs.empty else 'none')")
         
         if [ "$RUN_ID" != "none" ]; then
           echo "Found latest Run ID: $RUN_ID"
           
-          # Define Image Name
           IMAGE_NAME="${{ secrets.DOCKER_USERNAME }}/sistemml01:latest"
           
-          # Build Docker Image using MLflow
           mlflow models build-docker -m "runs:/$RUN_ID/model" -n "$IMAGE_NAME"
           
-          # Push to Docker Hub
           docker push "$IMAGE_NAME"
         else
           echo "No run found to build docker image."
           exit 1
         fi
+
+    - name: Docker Scout Scan
+      if: success()
+      uses: docker/scout-action@v1
+      with:
+        image: ${{ secrets.DOCKER_USERNAME }}/sistemml01:latest
+        summary: true
 
     - name: Upload MLflow Runs
       if: always()

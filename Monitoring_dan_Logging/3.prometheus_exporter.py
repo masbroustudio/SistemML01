@@ -9,7 +9,7 @@ import importlib.util
 import os
 import psutil
 
-# Import inference module dynamically
+# Impor modul inferensi secara dinamis
 script_dir = os.path.dirname(os.path.abspath(__file__))
 inference_path = os.path.join(script_dir, "7.inference.py")
 spec = importlib.util.spec_from_file_location("inference_module", inference_path)
@@ -19,54 +19,54 @@ spec.loader.exec_module(inference_module)
 app = Flask(__name__)
 swagger = Swagger(app)
 
-# Pydantic Model for Input Validation
+# Model Pydantic untuk Validasi Input
 class PredictionInput(BaseModel):
     features: List[float]
 
-# --- 10 METRICS DEFINITION ---
-# 1. Total Requests
+# --- DEFINISI 10 METRIK ---
+# 1. Total Permintaan
 REQUEST_COUNT = Counter('prediction_requests_total', 'Total number of prediction requests')
 
-# 2. Request Latency
+# 2. Latensi Permintaan
 REQUEST_LATENCY = Histogram('prediction_latency_seconds', 'Time spent processing prediction')
 
-# 3. Last Prediction Value
+# 3. Nilai Prediksi Terakhir
 PREDICTION_GAUGE = Gauge('last_prediction_value', 'The value of the last prediction')
 
-# 4. Prediction Output Distribution (Survived/Died)
+# 4. Distribusi Output Prediksi (Selamat/Meninggal)
 PREDICTION_OUTPUT_COUNT = Counter('prediction_output_count', 'Distribution of prediction classes', ['class'])
 
-# 5. Input Feature Sum (Dummy metric for data drift)
+# 5. Jumlah Fitur Input (Metrik dummy untuk data drift)
 INPUT_FEATURE_SUM = Counter('input_feature_sum', 'Sum of input feature values')
 
-# 6. Invalid Requests (Validation Errors)
+# 6. Permintaan Tidak Valid (Kesalahan Validasi)
 INVALID_REQUEST_COUNT = Counter('invalid_requests_total', 'Total number of invalid requests')
 
-# 7. System CPU Usage
+# 7. Penggunaan CPU Sistem
 SYSTEM_CPU_USAGE = Gauge('system_cpu_usage_percent', 'Current system CPU usage percentage')
 
-# 8. System Memory Usage
+# 8. Penggunaan Memori Sistem
 SYSTEM_MEMORY_USAGE = Gauge('system_memory_usage_bytes', 'Current system memory usage in bytes')
 
-# 9. Feature Distribution: Age (Index 2 in features)
+# 9. Distribusi Fitur: Umur (Indeks 2 dalam fitur)
 FEATURE_AGE_DIST = Histogram('feature_age_distribution', 'Distribution of Age feature')
 
-# 10. Feature Distribution: Fare (Index 5 in features)
+# 10. Distribusi Fitur: Tarif (Indeks 5 dalam fitur)
 FEATURE_FARE_DIST = Histogram('feature_fare_distribution', 'Distribution of Fare feature')
 
 
-# Initialize Model
+# Inisialisasi Model
 model_service = inference_module.ModelInference()
 
 def update_system_metrics():
-    """Update system metrics (CPU/Memory)"""
+    """Perbarui metrik sistem (CPU/Memori)"""
     SYSTEM_CPU_USAGE.set(psutil.cpu_percent())
     SYSTEM_MEMORY_USAGE.set(psutil.virtual_memory().used)
 
 @app.route('/predict', methods=['POST'])
 def predict():
     """
-    Predict Survival based on Titanic features.
+    Prediksi Kelangsungan Hidup berdasarkan fitur Titanic.
     ---
     tags:
       - Prediction
@@ -82,29 +82,29 @@ def predict():
               items:
                 type: number
               example: [3, 0, 22.0, 1, 0, 7.25, 1, 0]
-              description: List of processed features (Pclass, Sex, Age, SibSp, Parch, Fare, Embarked_Q, Embarked_S)
+              description: Daftar fitur yang diproses (Pclass, Sex, Age, SibSp, Parch, Fare, Embarked_Q, Embarked_S)
     responses:
       200:
-        description: Prediction result
+        description: Hasil prediksi
         schema:
           type: object
           properties:
             prediction:
               type: integer
-              description: 0 (Died) or 1 (Survived)
+              description: 0 (Meninggal) atau 1 (Selamat)
             status:
               type: string
       400:
-        description: Validation Error
+        description: Kesalahan Validasi
       500:
-        description: Internal Server Error
+        description: Kesalahan Server Internal
     """
     start_time = time.time()
     REQUEST_COUNT.inc()
     update_system_metrics()
     
     try:
-        # Validate input using Pydantic
+        # Validasi input menggunakan Pydantic
         json_data = request.json
         if not json_data:
              INVALID_REQUEST_COUNT.inc()
@@ -114,19 +114,19 @@ def predict():
         
         data = input_data.features
         
-        # Check if feature length matches model expectation (8 features)
+        # Periksa apakah panjang fitur sesuai ekspektasi model (8 fitur)
         if len(data) != 8:
-             # If strictly enforcing, uncomment below. For now, we allow pass-through if model handles it or we pad.
-             # But our dummy model expects 8.
-             # Let's pad or truncate to prevent crash? 
-             # Or just return error. Returning error is better for "Invalid Requests" metric.
+             # Jika ingin ketat, hapus komentar di bawah. Saat ini, kita izinkan jika model bisa menanganinya atau kita pad.
+             # Tapi model dummy kita mengharapkan 8.
+             # Mari pad atau potong untuk mencegah crash? 
+             # Atau kembalikan error. Mengembalikan error lebih baik untuk metrik "Permintaan Tidak Valid".
              if len(data) < 8:
                  data = data + [0] * (8 - len(data))
              elif len(data) > 8:
                  data = data[:8]
         
-        # Log feature metrics
-        # Age is index 2, Fare is index 5
+        # Catat metrik fitur
+        # Umur adalah indeks 2, Tarif adalah indeks 5
         if len(data) > 2:
             FEATURE_AGE_DIST.observe(data[2])
         if len(data) > 5:
@@ -136,7 +136,7 @@ def predict():
 
         prediction = model_service.predict(data)
         
-        # Record prediction metrics
+        # Rekam metrik prediksi
         PREDICTION_GAUGE.set(prediction)
         PREDICTION_OUTPUT_COUNT.labels(**{'class': str(int(prediction))}).inc()
         
@@ -153,11 +153,11 @@ def predict():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# Add prometheus wsgi middleware to route /metrics requests
+# Tambahkan middleware wsgi prometheus untuk merutekan permintaan /metrics
 app.wsgi_app = DispatcherMiddleware(app.wsgi_app, {
     '/metrics': make_wsgi_app()
 })
 
 if __name__ == '__main__':
     print("Starting Prometheus Exporter on port 5000...")
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5001)
