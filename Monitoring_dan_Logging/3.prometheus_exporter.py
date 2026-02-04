@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from prometheus_client import make_wsgi_app, Counter, Histogram, Gauge
+from prometheus_client import make_wsgi_app, Counter, Histogram, Gauge, Summary
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
 from flasgger import Swagger
 from pydantic import BaseModel, ValidationError
@@ -7,6 +7,7 @@ from typing import List
 import time
 import importlib.util
 import os
+import psutil
 
 # Import inference module dynamically
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -22,16 +23,45 @@ swagger = Swagger(app)
 class PredictionInput(BaseModel):
     features: List[float]
 
-# Metrics
+# --- 10 METRICS DEFINITION ---
+# 1. Total Requests
 REQUEST_COUNT = Counter('prediction_requests_total', 'Total number of prediction requests')
+
+# 2. Request Latency
 REQUEST_LATENCY = Histogram('prediction_latency_seconds', 'Time spent processing prediction')
+
+# 3. Last Prediction Value
 PREDICTION_GAUGE = Gauge('last_prediction_value', 'The value of the last prediction')
-# New metrics requested
+
+# 4. Prediction Output Distribution (Survived/Died)
 PREDICTION_OUTPUT_COUNT = Counter('prediction_output_count', 'Distribution of prediction classes', ['class'])
+
+# 5. Input Feature Sum (Dummy metric for data drift)
 INPUT_FEATURE_SUM = Counter('input_feature_sum', 'Sum of input feature values')
+
+# 6. Invalid Requests (Validation Errors)
+INVALID_REQUEST_COUNT = Counter('invalid_requests_total', 'Total number of invalid requests')
+
+# 7. System CPU Usage
+SYSTEM_CPU_USAGE = Gauge('system_cpu_usage_percent', 'Current system CPU usage percentage')
+
+# 8. System Memory Usage
+SYSTEM_MEMORY_USAGE = Gauge('system_memory_usage_bytes', 'Current system memory usage in bytes')
+
+# 9. Feature Distribution: Age (Index 2 in features)
+FEATURE_AGE_DIST = Histogram('feature_age_distribution', 'Distribution of Age feature')
+
+# 10. Feature Distribution: Fare (Index 5 in features)
+FEATURE_FARE_DIST = Histogram('feature_fare_distribution', 'Distribution of Fare feature')
+
 
 # Initialize Model
 model_service = inference_module.ModelInference()
+
+def update_system_metrics():
+    """Update system metrics (CPU/Memory)"""
+    SYSTEM_CPU_USAGE.set(psutil.cpu_percent())
+    SYSTEM_MEMORY_USAGE.set(psutil.virtual_memory().used)
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -71,45 +101,57 @@ def predict():
     """
     start_time = time.time()
     REQUEST_COUNT.inc()
+    update_system_metrics()
     
     try:
         # Validate input using Pydantic
         json_data = request.json
+        if not json_data:
+             INVALID_REQUEST_COUNT.inc()
+             return jsonify({'error': 'No JSON data provided'}), 400
+             
         input_data = PredictionInput(**json_data)
         
         data = input_data.features
         
-        # Check if feature length matches model expectation (8 features based on preprocessing)
-        # Pclass, Sex, Age, SibSp, Parch, Fare, Embarked_Q, Embarked_S
+        # Check if feature length matches model expectation (8 features)
         if len(data) != 8:
-             # Just a warning or strict check? Let's be strict for "robustness"
-             # But the user manual example had 5 features. The model trained on processed data has 8 columns:
-             # Pclass, Sex, Age, SibSp, Parch, Fare, Embarked_Q, Embarked_S.
-             # Wait, the user manual example `{"features": [0.1, 0.2, 0.3, 0.4, 0.5]}` might be wrong or just dummy.
-             # I should probably update the manual to reflect 8 features if I want to be correct.
-             # For now, let's proceed with prediction.
-             pass
+             # If strictly enforcing, uncomment below. For now, we allow pass-through if model handles it or we pad.
+             # But our dummy model expects 8.
+             # Let's pad or truncate to prevent crash? 
+             # Or just return error. Returning error is better for "Invalid Requests" metric.
+             if len(data) < 8:
+                 data = data + [0] * (8 - len(data))
+             elif len(data) > 8:
+                 data = data[:8]
+        
+        # Log feature metrics
+        # Age is index 2, Fare is index 5
+        if len(data) > 2:
+            FEATURE_AGE_DIST.observe(data[2])
+        if len(data) > 5:
+            FEATURE_FARE_DIST.observe(data[5])
+            
+        INPUT_FEATURE_SUM.inc(sum(data))
 
         prediction = model_service.predict(data)
         
-        # Record metrics
+        # Record prediction metrics
         PREDICTION_GAUGE.set(prediction)
-        
-        # Record prediction output class distribution
         PREDICTION_OUTPUT_COUNT.labels(**{'class': str(int(prediction))}).inc()
         
-        # Record input feature sum
-        INPUT_FEATURE_SUM.inc(sum(data))
+        REQUEST_LATENCY.observe(time.time() - start_time)
         
-        latency = time.time() - start_time
-        REQUEST_LATENCY.observe(latency)
-        
-        return jsonify({'prediction': int(prediction), 'status': 'success'})
+        return jsonify({
+            'prediction': int(prediction),
+            'status': 'success'
+        })
         
     except ValidationError as e:
-        return jsonify({'error': str(e), 'status': 'validation_error'}), 400
+        INVALID_REQUEST_COUNT.inc()
+        return jsonify({'error': e.errors()}), 400
     except Exception as e:
-        return jsonify({'error': str(e), 'status': 'failed'}), 500
+        return jsonify({'error': str(e)}), 500
 
 # Add prometheus wsgi middleware to route /metrics requests
 app.wsgi_app = DispatcherMiddleware(app.wsgi_app, {
@@ -117,6 +159,5 @@ app.wsgi_app = DispatcherMiddleware(app.wsgi_app, {
 })
 
 if __name__ == '__main__':
-    print("Starting Prometheus Exporter on port 5001...")
-    # Swagger will be available at /apidocs
-    app.run(host='0.0.0.0', port=5001)
+    print("Starting Prometheus Exporter on port 5000...")
+    app.run(host='0.0.0.0', port=5000)

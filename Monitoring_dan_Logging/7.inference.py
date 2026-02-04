@@ -29,5 +29,6 @@ class ModelInference:
 
 if __name__ == "__main__":
     inference = ModelInference()
-    sample_data = [0.1, 0.2, 0.3, 0.4, 0.5]
+    # Updated sample data to 8 features
+    sample_data = [1, 0, 22.0, 1, 0, 7.25, 1, 0]
     print(f"Prediction for {sample_data}: {inference.predict(sample_data)}")

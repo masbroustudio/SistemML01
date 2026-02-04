@@ -9,3 +9,4 @@ flasgger
 pydantic
 pytest
 dagshub
+psutil
