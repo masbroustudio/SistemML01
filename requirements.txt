@@ -4,3 +4,9 @@ scikit-learn==1.5.2
 matplotlib
 seaborn
 jupyter
+flask
+flasgger
+prometheus-client
+psutil
+pydantic
+requests

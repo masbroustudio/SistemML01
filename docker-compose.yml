@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  app:
+    image: python:3.12-slim
+    working_dir: /app
+    volumes:
+      - .:/app
+    # Instal dependencies dan jalankan exporter
+    command: sh -c "pip install --default-timeout=1000 --no-cache-dir -r requirements.txt && python Monitoring_dan_Logging/3.prometheus_exporter.py"
+    ports:
+      - "5001:5001"
+    networks:
+      - monitoring
+
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./Monitoring_dan_Logging/2.prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    networks:
+      - monitoring
+
+networks:
+  monitoring:
