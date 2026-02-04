@@ -49,3 +49,6 @@ venv.bak/
 # Documentation
 docs/
 grafana/
+
+# Logs
+logs/
