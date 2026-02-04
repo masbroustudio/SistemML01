@@ -1,0 +1,15 @@
+artifact_uri: file:///C:/Users/NITRO5/Documents/trae_projects/SistemML01/Membangun_model/mlruns/349928343618707604/01ca87a16eab42d8b6003594d3a958bd/artifacts
+end_time: 1770027448599
+entry_point_name: ''
+experiment_id: '349928343618707604'
+lifecycle_stage: active
+run_id: 01ca87a16eab42d8b6003594d3a958bd
+run_name: RF_n100_d5
+run_uuid: 01ca87a16eab42d8b6003594d3a958bd
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1770027441282
+status: 3
+tags: []
+user_id: NITRO5
