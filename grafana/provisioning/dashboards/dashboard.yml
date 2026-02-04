@@ -9,4 +9,4 @@ providers:
     updateIntervalSeconds: 10
     allowUiUpdates: true
     options:
-      path: /etc/grafana/provisioning/dashboards
+      path: C:\Users\NITRO5\Documents\trae_projects\SistemML01\grafana\provisioning\dashboards

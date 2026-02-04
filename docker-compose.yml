@@ -16,7 +16,7 @@ services:
   prometheus:
     image: prom/prometheus
     volumes:
-      - ./Monitoring_dan_Logging/2.prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./Monitoring_dan_Logging/2.prometheus.docker.yml:/etc/prometheus/prometheus.yml
     ports:
       - "9090:9090"
     networks:
@@ -30,6 +30,14 @@ services:
       - "3000:3000"
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
+      # Konfigurasi SMTP untuk Alerting (Contoh menggunakan Gmail)
+      - GF_SMTP_ENABLED=true
+      - GF_SMTP_HOST=smtp.gmail.com:587
+      - GF_SMTP_USER=email_anda@gmail.com
+      # Gunakan App Password jika menggunakan Gmail dengan 2FA
+      - GF_SMTP_PASSWORD=app_password_anda
+      - GF_SMTP_FROM_ADDRESS=email_anda@gmail.com
+      - GF_SMTP_FROM_NAME=Grafana Alert
     networks:
       - monitoring
 
