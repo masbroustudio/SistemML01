@@ -50,8 +50,15 @@ jobs:
           
           IMAGE_NAME="${{ secrets.DOCKER_USERNAME }}/sistemml01:latest"
           
-          mlflow models build-docker -m "runs:/$RUN_ID/model" -n "$IMAGE_NAME"
+          # Generate Dockerfile explicitly to modify mirrors
+          mlflow models generate-dockerfile --model-uri "runs:/$RUN_ID/model" --output-directory model_docker_build
           
+          # Replace Ubuntu mirrors with Azure mirrors (more reliable in GitHub Actions)
+          sed -i 's/archive.ubuntu.com/azure.archive.ubuntu.com/g' model_docker_build/Dockerfile
+          sed -i 's/security.ubuntu.com/azure.archive.ubuntu.com/g' model_docker_build/Dockerfile
+          
+          # Build and push
+          docker build -t "$IMAGE_NAME" model_docker_build
           docker push "$IMAGE_NAME"
         else
           echo "No run found to build docker image."

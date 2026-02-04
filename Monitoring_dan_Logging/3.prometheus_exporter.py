@@ -25,34 +25,34 @@ class PredictionInput(BaseModel):
 
 # --- DEFINISI 10 METRIK ---
 # 1. Total Permintaan
-REQUEST_COUNT = Counter('prediction_requests_total', 'Total number of prediction requests')
+REQUEST_COUNT = Counter('prediction_requests_total', 'Total jumlah permintaan prediksi')
 
 # 2. Latensi Permintaan
-REQUEST_LATENCY = Histogram('prediction_latency_seconds', 'Time spent processing prediction')
+REQUEST_LATENCY = Histogram('prediction_latency_seconds', 'Waktu pemrosesan prediksi')
 
 # 3. Nilai Prediksi Terakhir
-PREDICTION_GAUGE = Gauge('last_prediction_value', 'The value of the last prediction')
+PREDICTION_GAUGE = Gauge('last_prediction_value', 'Nilai prediksi terakhir')
 
 # 4. Distribusi Output Prediksi (Selamat/Meninggal)
-PREDICTION_OUTPUT_COUNT = Counter('prediction_output_count', 'Distribution of prediction classes', ['class'])
+PREDICTION_OUTPUT_COUNT = Counter('prediction_output_count', 'Distribusi kelas prediksi', ['class'])
 
 # 5. Jumlah Fitur Input (Metrik dummy untuk data drift)
-INPUT_FEATURE_SUM = Counter('input_feature_sum', 'Sum of input feature values')
+INPUT_FEATURE_SUM = Counter('input_feature_sum', 'Jumlah nilai fitur input')
 
 # 6. Permintaan Tidak Valid (Kesalahan Validasi)
-INVALID_REQUEST_COUNT = Counter('invalid_requests_total', 'Total number of invalid requests')
+INVALID_REQUEST_COUNT = Counter('invalid_requests_total', 'Total jumlah permintaan tidak valid')
 
 # 7. Penggunaan CPU Sistem
-SYSTEM_CPU_USAGE = Gauge('system_cpu_usage_percent', 'Current system CPU usage percentage')
+SYSTEM_CPU_USAGE = Gauge('system_cpu_usage_percent', 'Persentase penggunaan CPU sistem saat ini')
 
 # 8. Penggunaan Memori Sistem
-SYSTEM_MEMORY_USAGE = Gauge('system_memory_usage_bytes', 'Current system memory usage in bytes')
+SYSTEM_MEMORY_USAGE = Gauge('system_memory_usage_bytes', 'Penggunaan memori sistem saat ini dalam byte')
 
 # 9. Distribusi Fitur: Umur (Indeks 2 dalam fitur)
-FEATURE_AGE_DIST = Histogram('feature_age_distribution', 'Distribution of Age feature')
+FEATURE_AGE_DIST = Histogram('feature_age_distribution', 'Distribusi fitur Umur')
 
 # 10. Distribusi Fitur: Tarif (Indeks 5 dalam fitur)
-FEATURE_FARE_DIST = Histogram('feature_fare_distribution', 'Distribution of Fare feature')
+FEATURE_FARE_DIST = Histogram('feature_fare_distribution', 'Distribusi fitur Tarif')
 
 
 # Inisialisasi Model
