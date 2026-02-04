@@ -30,16 +30,20 @@ def train_model():
     if os.environ.get("MLFLOW_RUN_ID"):
         print("Running within MLflow Project context...")
         # Do NOT set experiment, as it's already determined by mlflow run
-        with mlflow.start_run():
-            model = RandomForestClassifier(n_estimators=100, random_state=42)
-            model.fit(X_train, y_train)
-            
-            y_pred = model.predict(X_test)
-            acc = accuracy_score(y_test, y_pred)
-            print(f"Accuracy: {acc}")
-            
-            signature = mlflow.models.infer_signature(X_train, model.predict(X_train))
-            mlflow.sklearn.log_model(model, "model", signature=signature)
+        # NOTE: When MLFLOW_RUN_ID is present, mlflow.start_run() will resume that run automatically
+        # We should not create a nested run if the intention is to use the project run
+        
+        model = RandomForestClassifier(n_estimators=100, random_state=42)
+        model.fit(X_train, y_train)
+        
+        y_pred = model.predict(X_test)
+        acc = accuracy_score(y_test, y_pred)
+        print(f"Accuracy: {acc}")
+        
+        # Explicitly log model to ensure it's captured even if autolog fails on permissions
+        # But be careful not to duplicate if autolog works
+        # signature = mlflow.models.infer_signature(X_train, model.predict(X_train))
+        # mlflow.sklearn.log_model(model, "model", signature=signature)
             
     # Check if we are already in an active run (e.g. invoked via code wrapper)
     elif mlflow.active_run():
