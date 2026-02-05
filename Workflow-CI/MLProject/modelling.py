@@ -28,16 +28,13 @@ def train_model():
     # Muat data
     logging.info("Loading data...")
     try:
-        df = pd.read_csv('train_processed.csv')
+        df = pd.read_csv('titanic_preprocessing.csv')
         logging.info("Data loaded from current directory.")
     except FileNotFoundError:
-        # Fallback jika dijalankan dari root
-        try:
-            df = pd.read_csv('Membangun_model/titanic_preprocessing.csv')
-            logging.info("Data loaded from Membangun_model directory.")
-        except FileNotFoundError:
-            logging.error("titanic_preprocessing.csv not found!")
-            raise
+        logging.error("titanic_preprocessing.csv not found!")
+        logging.error(f"Current working directory: {os.getcwd()}")
+        logging.error(f"Files in current directory: {os.listdir('.')}")
+        raise
     
     X = df.drop('Survived', axis=1)
     # Ubah ke float untuk hindari peringatan skema MLflow
