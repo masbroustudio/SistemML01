@@ -28,7 +28,7 @@ def train_model():
     # Muat data
     logging.info("Loading data...")
     try:
-        df = pd.read_csv('train_processed.csv')
+        df = pd.read_csv('titanic_preprocessing.csv')
         logging.info("Data loaded from current directory.")
     except FileNotFoundError:
         # Fallback jika dijalankan dari root

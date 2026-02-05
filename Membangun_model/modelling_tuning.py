@@ -8,24 +8,40 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 import dagshub
+import argparse
 
-def train_with_tuning():
-    # Inisialisasi DagsHub
-    dagshub.init(repo_owner='masbroumail', repo_name='SistemML01', mlflow=True)
-    
-    # Muat data
+def train_with_tuning(enable_dagshub=False):
+    if enable_dagshub:
+        # Inisialisasi DagsHub (Poin 6)
+        print("Using DagsHub Tracking...")
+        dagshub.init(repo_owner='masbroumail', repo_name='SistemML01', mlflow=True)
+        experiment_name = "Titanic_Tuned_Model_DagsHub"
+    else:
+        # Local Tracking (Poin 4)
+        print("Using Local Tracking...")
+        # Reset tracking URI to local just in case
+        mlflow.set_tracking_uri("")
+        experiment_name = "Titanic_Tuned_Model_Local"
+
+    # Muat data (Poin 1)
     print("Loading data...")
     try:
-        df = pd.read_csv('train_processed.csv')
+        df = pd.read_csv('titanic_preprocessing.csv')
     except FileNotFoundError:
-        df = pd.read_csv('Membangun_model/train_processed.csv')
+        try:
+            df = pd.read_csv('Membangun_model/titanic_preprocessing.csv')
+        except FileNotFoundError:
+            print("Error: Dataset not found!")
+            return
     
     X = df.drop('Survived', axis=1)
+    # Convert to float to avoid MLflow schema warnings
+    X = X.astype(float)
     y = df['Survived']
     
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     
-    mlflow.set_experiment("Titanic_Tuned_Model")
+    mlflow.set_experiment(experiment_name)
     
     # Hyperparameter untuk di-tuning
     n_estimators_list = [50, 100]
@@ -36,7 +52,10 @@ def train_with_tuning():
     
     for n_est in n_estimators_list:
         for depth in max_depth_list:
-            with mlflow.start_run(run_name=f"RF_n{n_est}_d{depth}"):
+            run_name = f"RF_n{n_est}_d{depth}"
+            with mlflow.start_run(run_name=run_name):
+                # Poin 5: Manual Logging (Metrics & Params)
+                
                 # Logging Manual: Parameter
                 params = {"n_estimators": n_est, "max_depth": depth}
                 mlflow.log_params(params)
@@ -57,13 +76,13 @@ def train_with_tuning():
                 mlflow.log_metric("recall", rec)
                 mlflow.log_metric("f1_score", f1)
                 
-                print(f"Run: n_est={n_est}, depth={depth} -> Accuracy: {acc}")
+                print(f"Run: {run_name} -> Accuracy: {acc}")
                 
                 # Advanced: Log Artefak (Confusion Matrix)
                 cm = confusion_matrix(y_test, y_pred)
                 plt.figure(figsize=(6,4))
                 sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
-                plt.title('Confusion Matrix')
+                plt.title(f'Confusion Matrix {run_name}')
                 plt.ylabel('True Label')
                 plt.xlabel('Predicted Label')
                 
@@ -77,7 +96,9 @@ def train_with_tuning():
                 mlflow.log_artifact(cm_path)
                 
                 # Log model
-                mlflow.sklearn.log_model(model, "model")
+                # Poin 5: Manual logging model (instead of autolog)
+                signature = mlflow.models.infer_signature(X_train, model.predict(X_train))
+                mlflow.sklearn.log_model(model, "model", signature=signature)
                 
                 if acc > best_acc:
                     best_acc = acc
@@ -86,4 +107,8 @@ def train_with_tuning():
     print(f"Best Accuracy: {best_acc} with params {best_params}")
 
 if __name__ == "__main__":
-    train_with_tuning()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dagshub", action="store_true", help="Enable DagsHub tracking")
+    args = parser.parse_args()
+    
+    train_with_tuning(enable_dagshub=args.dagshub)

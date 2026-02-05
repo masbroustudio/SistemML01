@@ -1,8 +1,8 @@
 import pandas as pd
 import mlflow
 import mlflow.sklearn
-import os
 import logging
+import os
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
@@ -23,7 +23,7 @@ def setup_logging():
 
 def train_model():
     setup_logging()
-    logging.info("Starting training pipeline (CI/CD context)...")
+    logging.info("Starting training pipeline...")
 
     # Muat data
     logging.info("Loading data...")
@@ -31,13 +31,16 @@ def train_model():
         df = pd.read_csv('titanic_preprocessing.csv')
         logging.info("Data loaded from current directory.")
     except FileNotFoundError:
-        logging.error("titanic_preprocessing.csv not found!")
-        logging.error(f"Current working directory: {os.getcwd()}")
-        logging.error(f"Files in current directory: {os.listdir('.')}")
-        raise
+        # Fallback jika dijalankan dari root
+        try:
+            df = pd.read_csv('Membangun_model/titanic_preprocessing.csv')
+            logging.info("Data loaded from Membangun_model directory.")
+        except FileNotFoundError:
+            logging.error("titanic_preprocessing.csv not found!")
+            raise
     
     X = df.drop('Survived', axis=1)
-    # Ubah ke float untuk hindari peringatan skema MLflow
+    # Ubah ke float untuk hindari peringatan skema MLflow tentang kolom integer
     X = X.astype(float)
     y = df['Survived']
     
@@ -45,54 +48,26 @@ def train_model():
     logging.info("Splitting data...")
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     
+    # Set eksperimen
+    mlflow.set_experiment("Titanic_Basic_Model")
+    
     # Aktifkan autolog
     mlflow.sklearn.autolog()
     
-    # Cek jika berjalan via 'mlflow run' (MLFLOW_RUN_ID akan diset)
-    if os.environ.get("MLFLOW_RUN_ID"):
-        logging.info("Running within MLflow Project context...")
-        # JANGAN set eksperimen, karena sudah ditentukan oleh mlflow run
-        # CATATAN: Saat MLFLOW_RUN_ID ada, mlflow.start_run() akan melanjutkan run itu
-        # Jangan buat nested run jika tujuannya menggunakan project run
-        
+    with mlflow.start_run():
+        logging.info("Training model...")
         model = RandomForestClassifier(n_estimators=100, random_state=42)
         model.fit(X_train, y_train)
         
+        # Evaluasi (Autolog menangani ini, tapi bagus untuk dicetak)
         y_pred = model.predict(X_test)
         acc = accuracy_score(y_test, y_pred)
         logging.info(f"Accuracy: {acc}")
         
-        # Log model secara eksplisit untuk memastikan tercatat
-        # Tapi hati-hati jangan duplikasi jika autolog bekerja
-        # signature = mlflow.models.infer_signature(X_train, model.predict(X_train))
-        # mlflow.sklearn.log_model(model, "model", signature=signature)
-            
-    # Cek jika kita sudah dalam run aktif (misal via code wrapper)
-    elif mlflow.active_run():
-        logging.info("Training model in existing run...")
-        model = RandomForestClassifier(n_estimators=100, random_state=42)
-        model.fit(X_train, y_train)
-        
-        y_pred = model.predict(X_test)
-        acc = accuracy_score(y_test, y_pred)
-        logging.info(f"Accuracy: {acc}")
-        
+        # Infer signature (opsional tapi praktik yang baik)
         signature = mlflow.models.infer_signature(X_train, model.predict(X_train))
         mlflow.sklearn.log_model(model, "model", signature=signature)
-    else:
-        # Set eksperimen hanya jika berjalan lokal/manual
-        mlflow.set_experiment("Titanic_Basic_Model")
-        with mlflow.start_run():
-            logging.info("Training model in new run...")
-            model = RandomForestClassifier(n_estimators=100, random_state=42)
-            model.fit(X_train, y_train)
-            
-            y_pred = model.predict(X_test)
-            acc = accuracy_score(y_test, y_pred)
-            logging.info(f"Accuracy: {acc}")
-            
-            signature = mlflow.models.infer_signature(X_train, model.predict(X_train))
-            mlflow.sklearn.log_model(model, "model", signature=signature)
+        logging.info("Model logged to MLflow.")
 
 if __name__ == "__main__":
     train_model()
