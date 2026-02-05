@@ -33,10 +33,10 @@ def train_model():
     except FileNotFoundError:
         # Fallback jika dijalankan dari root
         try:
-            df = pd.read_csv('Membangun_model/train_processed.csv')
+            df = pd.read_csv('Membangun_model/titanic_preprocessing.csv')
             logging.info("Data loaded from Membangun_model directory.")
         except FileNotFoundError:
-            logging.error("train_processed.csv not found!")
+            logging.error("titanic_preprocessing.csv not found!")
             raise
     
     X = df.drop('Survived', axis=1)

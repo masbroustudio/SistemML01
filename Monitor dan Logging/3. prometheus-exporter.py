@@ -11,7 +11,7 @@ import psutil
 
 # Impor modul inferensi secara dinamis
 script_dir = os.path.dirname(os.path.abspath(__file__))
-inference_path = os.path.join(script_dir, "7.inference.py")
+inference_path = os.path.join(script_dir, "7. inference.py")
 spec = importlib.util.spec_from_file_location("inference_module", inference_path)
 inference_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(inference_module)

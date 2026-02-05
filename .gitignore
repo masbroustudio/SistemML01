@@ -52,3 +52,24 @@ grafana/
 
 # Logs
 logs/
+
+# Submission Cleanup - Ignoring files not in structure
+# Root level extras
+/requirements.txt
+docker-compose.yml
+create_notebook.py
+download_data.py
+test_api_request.py
+test_api_validation.py
+tests/
+temp_artifacts/
+.github/
+Eksperimen_SML_YudhaElfransyah/
+Workflow-CI/
+
+
+# Membangun_model extras
+Membangun_model/temp_artifacts/
+
+temp_artifacts/
+test/
