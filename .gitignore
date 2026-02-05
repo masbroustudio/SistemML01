@@ -63,9 +63,7 @@ test_api_request.py
 test_api_validation.py
 tests/
 temp_artifacts/
-.github/
-Eksperimen_SML_YudhaElfransyah/
-Workflow-CI/
+# .github/
 
 
 # Membangun_model extras
